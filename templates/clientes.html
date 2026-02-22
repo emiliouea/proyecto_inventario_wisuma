@@ -1,0 +1,42 @@
+{% extends "base.html" %} {% block title %}Clientes - Ferretería Senguana{%
+endblock %} {% block content %}
+<div class="page-header">
+  <h2>Gestión de Clientes</h2>
+  <p>Administra la información de tus clientes registrados</p>
+</div>
+
+<div class="table-container">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Email</th>
+        <th>Tipo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cliente in clientes %}
+      <tr>
+        <td>{{ cliente.id }}</td>
+        <td>{{ cliente.nombre }}</td>
+        <td>{{ cliente.telefono }}</td>
+        <td>{{ cliente.email }}</td>
+        <td><span class="badge">{{ cliente.tipo }}</span></td>
+        <td>
+          <a href="#" class="btn-link">Ver</a>
+          <a href="#" class="btn-link">Editar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if clientes|length == 0 %}
+<div class="empty-state">
+  <p>No hay clientes registrados en el sistema.</p>
+</div>
+{% endif %} {% endblock %}

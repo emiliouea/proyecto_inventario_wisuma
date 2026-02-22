@@ -1,0 +1,52 @@
+{% extends "base.html" %} {% block title %}Facturas - Ferretería Senguana{%
+endblock %} {% block content %}
+<div class="page-header">
+  <h2>Gestión de Facturas</h2>
+  <p>Consulta y administra las facturas de venta</p>
+</div>
+
+<div class="table-container">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Nº Factura</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Total</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for factura in facturas %}
+      <tr>
+        <td><strong>{{ factura.numero }}</strong></td>
+        <td>{{ factura.fecha }}</td>
+        <td>{{ factura.cliente }}</td>
+        <td>${{ "%.2f"|format(factura.total) }}</td>
+        <td>
+          <span class="badge badge-{{ factura.estado }}"
+            >{{ factura.estado }}</span
+          >
+        </td>
+        <td>
+          <a href="#" class="btn-link">Ver</a>
+          <a href="#" class="btn-link">Imprimir</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if facturas|length == 0 %}
+<div class="empty-state">
+  <p>No hay facturas registradas en el sistema.</p>
+</div>
+{% endif %}
+
+<div class="summary">
+  <h3>Resumen</h3>
+  <p>Total de facturas: <strong>{{ facturas|length }}</strong></p>
+</div>
+{% endblock %}

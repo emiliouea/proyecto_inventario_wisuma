@@ -1,0 +1,48 @@
+{% extends "base.html" %} {% block title %}Inicio - Ferretería Senguana{%
+endblock %} {% block content %}
+<div class="welcome-section">
+  <h2>Bienvenido al Sistema de Inventario</h2>
+  <p>Gestiona eficientemente el inventario de tu ferretería</p>
+</div>
+
+<div class="dashboard">
+  <a href="{{ url_for('productos') }}" class="card-link">
+    <div class="card">
+      <h3>Productos</h3>
+      <p>Gestiona el catálogo de productos disponibles</p>
+    </div>
+  </a>
+
+  <a href="{{ url_for('clientes') }}" class="card-link">
+    <div class="card">
+      <h3>Clientes</h3>
+      <p>Administra la información de tus clientes</p>
+    </div>
+  </a>
+
+  <a href="{{ url_for('facturas') }}" class="card-link">
+    <div class="card">
+      <h3>Facturas</h3>
+      <p>Consulta y genera facturas de venta</p>
+    </div>
+  </a>
+</div>
+
+<div class="stats">
+  <h3>Estadísticas Rápidas</h3>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <span class="stat-number">{{ total_productos }}</span>
+      <span class="stat-label">Productos en Stock</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ total_clientes }}</span>
+      <span class="stat-label">Clientes Registrados</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ total_facturas }}</span>
+      <span class="stat-label">Facturas Emitidas</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

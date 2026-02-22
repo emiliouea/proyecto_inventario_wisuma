@@ -1,0 +1,32 @@
+{% extends "base.html" %} {% block title %}Producto {{ codigo }} - Ferretería
+Senguana{% endblock %} {% block content %}
+<div class="page-header">
+  <h2>Detalle del Producto</h2>
+  <a href="{{ url_for('productos') }}" class="btn-back">← Volver a Productos</a>
+</div>
+
+<div class="product-detail">
+  <div class="detail-card">
+    <h3>{{ producto.nombre }}</h3>
+    <div class="detail-info">
+      <p><strong>Código:</strong> {{ producto.codigo }}</p>
+      <p><strong>Categoría:</strong> {{ producto.categoria }}</p>
+      <p><strong>Precio:</strong> ${{ "%.2f"|format(producto.precio) }}</p>
+      <p><strong>Stock Disponible:</strong> {{ producto.stock }} unidades</p>
+      <p><strong>Ubicación:</strong> {{ producto.ubicacion }}</p>
+      <p>
+        <strong>Estado:</strong>
+        <span
+          class="badge badge-{{ 'success' if producto.stock > 0 else 'danger' }}"
+        >
+          {{ 'Disponible' if producto.stock > 0 else 'Agotado' }}
+        </span>
+      </p>
+    </div>
+    <div class="detail-description">
+      <h4>Descripción</h4>
+      <p>{{ producto.descripcion }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

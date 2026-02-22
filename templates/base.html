@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}Sistema de Inventario - Ferretería Senguana{% endblock %}
+    </title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="container header-content">
+        <div class="header-left">
+          <h1>Ferretería Senguana</h1>
+          <p class="subtitle">Sistema de Gestión de Inventario</p>
+        </div>
+        <nav class="header-nav">
+          <ul class="nav-menu">
+            <li>
+              <a
+                href="{{ url_for('inicio') }}"
+                class="{% if request.endpoint == 'inicio' %}active{% endif %}"
+                >Inicio</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('productos') }}"
+                class="{% if request.endpoint in ['productos', 'item'] %}active{% endif %}"
+                >Productos</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('clientes') }}"
+                class="{% if request.endpoint == 'clientes' %}active{% endif %}"
+                >Clientes</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('facturas') }}"
+                class="{% if request.endpoint == 'facturas' %}active{% endif %}"
+                >Facturas</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('about') }}"
+                class="{% if request.endpoint == 'about' %}active{% endif %}"
+                >Acerca de</a
+              >
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">{% block content %}{% endblock %}</main>
+
+    <footer>
+      <div class="container">
+        <p>&copy; 2026 Ferretería Senguana - Sistema de Inventario</p>
+        <p>Desarrollado con Flask y Jinja2</p>
+      </div>
+    </footer>
+  </body>
+</html>

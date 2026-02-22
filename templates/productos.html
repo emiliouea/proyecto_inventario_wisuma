@@ -1,0 +1,37 @@
+{% extends "base.html" %} {% block title %}Productos - Ferretería Senguana{%
+endblock %} {% block content %}
+<div class="page-header">
+  <h2>Catálogo de Productos</h2>
+  <p>Gestiona el inventario de productos disponibles en bodega</p>
+</div>
+
+<div class="products-grid">
+  {% for producto in productos %}
+  <div class="product-card">
+    <div class="product-header">
+      <h3>{{ producto.nombre }}</h3>
+      <span class="product-code">Código: {{ producto.codigo }}</span>
+    </div>
+    <div class="product-body">
+      <p class="product-category">{{ producto.categoria }}</p>
+      <p class="product-price">${{ "%.2f"|format(producto.precio) }}</p>
+      <p class="product-stock">
+        Stock: <strong>{{ producto.stock }} unidades</strong>
+      </p>
+    </div>
+    <div class="product-footer">
+      <a
+        href="{{ url_for('item', codigo=producto.codigo) }}"
+        class="btn btn-small"
+        >Ver Detalles</a
+      >
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if productos|length == 0 %}
+<div class="empty-state">
+  <p>No hay productos registrados en el sistema.</p>
+</div>
+{% endif %} {% endblock %}
