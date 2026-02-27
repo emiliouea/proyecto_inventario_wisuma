@@ -13,23 +13,91 @@ endblock %} {% block content %}
 
     <h3>Sobre el Sistema</h3>
     <p>
-      Sistema de gestión de inventario desarrollado con Flask, diseñado para:
+      Sistema avanzado de gestión de inventario desarrollado con Flask,
+      implementando Programación Orientada a Objetos (POO), colecciones de
+      Python y base de datos SQLite.
     </p>
-    <ul>
-      <li>Gestionar productos y categorías</li>
-      <li>Administrar información de clientes</li>
-      <li>Generar y consultar facturas</li>
-      <li>Controlar el stock en tiempo real</li>
-      <li>Generar reportes de ventas</li>
-    </ul>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <h4>📦 Gestión de Productos</h4>
+        <p>
+          CRUD completo con búsqueda, filtros por categoría y alertas de stock
+          bajo
+        </p>
+      </div>
+      <div class="feature-card">
+        <h4>👥 Administración de Clientes</h4>
+        <p>
+          Registro y gestión de clientes con tipos (Regular, Premium, Mayorista)
+        </p>
+      </div>
+      <div class="feature-card">
+        <h4>📊 Estadísticas en Tiempo Real</h4>
+        <p>Dashboard con métricas del inventario y valor total</p>
+      </div>
+      <div class="feature-card">
+        <h4>💾 Base de Datos SQLite</h4>
+        <p>Persistencia de datos con operaciones CRUD optimizadas</p>
+      </div>
+    </div>
+
+    <h3>Implementación Técnica</h3>
+
+    <div class="tech-section">
+      <h4>Programación Orientada a Objetos (POO)</h4>
+      <ul>
+        <li>
+          <strong>Clase Producto:</strong> Encapsulamiento con atributos
+          privados y validación
+        </li>
+        <li>
+          <strong>Clase Cliente:</strong> Gestión de información de clientes
+        </li>
+        <li><strong>Clase Factura:</strong> Registro de transacciones</li>
+        <li>
+          <strong>Clase Inventario:</strong> Lógica de negocio y operaciones
+          CRUD
+        </li>
+      </ul>
+    </div>
+
+    <div class="tech-section">
+      <h4>Uso de Colecciones de Python</h4>
+      <ul>
+        <li>
+          <strong>Diccionarios:</strong> Cache de productos para búsqueda O(1)
+        </li>
+        <li><strong>Conjuntos (Sets):</strong> Validación de códigos únicos</li>
+        <li>
+          <strong>Listas:</strong> Almacenamiento de categorías y resultados
+        </li>
+        <li>
+          <strong>Tuplas:</strong> Retorno de múltiples valores en operaciones
+        </li>
+      </ul>
+    </div>
+
+    <div class="tech-section">
+      <h4>Base de Datos SQLite</h4>
+      <ul>
+        <li>Tablas: productos, clientes, facturas</li>
+        <li>Relaciones con FOREIGN KEY</li>
+        <li>Operaciones CRUD completas</li>
+        <li>Datos de ejemplo precargados</li>
+      </ul>
+    </div>
 
     <h3>Tecnologías Utilizadas</h3>
-    <ul>
-      <li><strong>Backend:</strong> Flask (Python)</li>
-      <li><strong>Templates:</strong> Jinja2</li>
-      <li><strong>Frontend:</strong> HTML5, CSS3</li>
-      <li><strong>Despliegue:</strong> Render</li>
-    </ul>
+    <div class="tech-stack">
+      <span class="tech-badge">Python 3.x</span>
+      <span class="tech-badge">Flask 3.0.0</span>
+      <span class="tech-badge">SQLite3</span>
+      <span class="tech-badge">Jinja2</span>
+      <span class="tech-badge">HTML5</span>
+      <span class="tech-badge">CSS3</span>
+      <span class="tech-badge">Gunicorn</span>
+    </div>
 
     <h3>Contacto</h3>
     <p>
@@ -37,6 +105,98 @@ endblock %} {% block content %}
       <strong>Teléfono:</strong> (123) 456-7890<br />
       <strong>Email:</strong> ey.senguanaw@uea.edu.ec
     </p>
+
+    <div class="project-info">
+      <p><strong>Proyecto Académico</strong></p>
+      <p>Desarrollo de Aplicaciones Web - Semana 11</p>
+      <p>Implementación de POO, Colecciones y SQLite</p>
+    </div>
   </div>
 </div>
+
+<style>
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .feature-card {
+    background: #f7fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #2c5282;
+  }
+
+  .feature-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2c5282;
+  }
+
+  .feature-card p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 0.9rem;
+  }
+
+  .tech-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .tech-section h4 {
+    color: #2c5282;
+    margin-top: 0;
+  }
+
+  .tech-section ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .tech-section li {
+    margin: 0.5rem 0;
+    color: #4a5568;
+  }
+
+  .tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .tech-badge {
+    background: #2c5282;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .project-info {
+    background: #edf2f7;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+    text-align: center;
+  }
+
+  .project-info p {
+    margin: 0.5rem 0;
+    color: #2d3748;
+  }
+
+  .project-info p:first-child {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2c5282;
+  }
+</style>
+
 {% endblock %}

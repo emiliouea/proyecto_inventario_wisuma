@@ -1,42 +1,251 @@
 {% extends "base.html" %} {% block title %}Clientes - Ferretería Senguana{%
 endblock %} {% block content %}
-<div class="page-header">
-  <h2>Gestión de Clientes</h2>
-  <p>Administra la información de tus clientes registrados</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2><i class="bi bi-people"></i> Gestión de Clientes</h2>
+    <p class="text-muted">
+      Administra la información de tus clientes registrados
+    </p>
+  </div>
+  <button
+    class="btn btn-success"
+    data-bs-toggle="modal"
+    data-bs-target="#clientModal"
+    onclick="openClientModal()"
+  >
+    <i class="bi bi-person-plus"></i> Agregar Cliente
+  </button>
 </div>
 
-<div class="table-container">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nombre</th>
-        <th>Teléfono</th>
-        <th>Email</th>
-        <th>Tipo</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for cliente in clientes %}
-      <tr>
-        <td>{{ cliente.id }}</td>
-        <td>{{ cliente.nombre }}</td>
-        <td>{{ cliente.telefono }}</td>
-        <td>{{ cliente.email }}</td>
-        <td><span class="badge">{{ cliente.tipo }}</span></td>
-        <td>
-          <a href="#" class="btn-link">Ver</a>
-          <a href="#" class="btn-link">Editar</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%} {% for category, message in messages %}
+<div
+  class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show"
+  role="alert"
+>
+  {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %} {% endif %} {% endwith %}
+
+<!-- Tabla de Clientes -->
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Tipo</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cliente in clientes %}
+          <tr>
+            <td><strong>{{ cliente.id }}</strong></td>
+            <td>
+              <i class="bi bi-person-circle text-primary"></i> {{ cliente.nombre
+              }}
+            </td>
+            <td>
+              {% if cliente.telefono %}
+              <i class="bi bi-telephone"></i> {{ cliente.telefono }} {% else %}
+              <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if cliente.email %}
+              <i class="bi bi-envelope"></i> {{ cliente.email }} {% else %}
+              <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+            <td>
+              <span
+                class="badge {% if cliente.tipo == 'Premium' %}bg-warning text-dark {% elif cliente.tipo == 'Mayorista' %}bg-success {% else %}bg-info{% endif %}"
+              >
+                {{ cliente.tipo }}
+            </td>
+            <td class="text-center">
+              <div class="btn-group" role="group">
+                <button
+                  class="btn btn-sm btn-info text-white"
+                  data-bs-toggle="modal"
+                  data-bs-target="#clientModal"
+                  onclick="editClient(this)"
+                  data-id="{{ cliente.id }}"
+                  data-nombre="{{ cliente.nombre }}"
+                  data-telefono="{{ cliente.telefono }}"
+                  data-email="{{ cliente.email }}"
+                  data-tipo="{{ cliente.tipo }}"
+                >
+                  <i class="bi bi-pencil"></i> Editar
+                </button>
+                <form
+                  method="POST"
+                  action="{{ url_for('cliente_eliminar', cliente_id=cliente.id) }}"
+                  class="d-inline"
+                  onsubmit="
+                    return confirm('¿Está seguro de eliminar este cliente?');
+                  "
+                >
+                  <button type="submit" class="btn btn-sm btn-danger">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 {% if clientes|length == 0 %}
-<div class="empty-state">
-  <p>No hay clientes registrados en el sistema.</p>
+<div class="text-center py-5">
+  <i class="bi bi-people display-1 text-muted"></i>
+  <p class="lead">No hay clientes registrados en el sistema.</p>
+  <button
+    class="btn btn-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#clientModal"
+    onclick="openClientModal()"
+  >
+    <i class="bi bi-person-plus"></i> Agregar Primer Cliente
+  </button>
 </div>
-{% endif %} {% endblock %}
+{% endif %}
+
+<!-- Modal Bootstrap para Agregar/Editar Cliente -->
+<div
+  class="modal fade"
+  id="clientModal"
+  tabindex="-1"
+  aria-labelledby="modalTitle"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="modalTitle">Agregar Cliente</h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <form
+        id="clientForm"
+        method="POST"
+        action="{{ url_for('cliente_nuevo') }}"
+      >
+        <div class="modal-body">
+          <input type="hidden" id="clientId" name="client_id" />
+
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre Completo *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input
+                type="text"
+                class="form-control"
+                id="nombre"
+                name="nombre"
+                required
+                placeholder="Ej: Juan Pérez"
+              />
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="telefono" class="form-label">Teléfono</label>
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="bi bi-telephone"></i
+                ></span>
+                <input
+                  type="tel"
+                  class="form-control"
+                  id="telefono"
+                  name="telefono"
+                  placeholder="555-1234"
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="email" class="form-label">Email</label>
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="bi bi-envelope"></i
+                ></span>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email"
+                  name="email"
+                  placeholder="correo@ejemplo.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="tipo" class="form-label">Tipo de Cliente *</label>
+            <select class="form-select" id="tipo" name="tipo" required>
+              <option value="Regular">Regular</option>
+              <option value="Premium">Premium</option>
+              <option value="Mayorista">Mayorista</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            <i class="bi bi-x-circle"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openClientModal() {
+    document.getElementById("modalTitle").textContent = "Agregar Cliente";
+    document.getElementById("clientForm").action =
+      "{{ url_for('cliente_nuevo') }}";
+    document.getElementById("clientForm").reset();
+    document.getElementById("clientId").value = "";
+  }
+
+  function editClient(button) {
+    const id = button.getAttribute("data-id");
+    const nombre = button.getAttribute("data-nombre");
+    const telefono = button.getAttribute("data-telefono");
+    const email = button.getAttribute("data-email");
+    const tipo = button.getAttribute("data-tipo");
+
+    document.getElementById("modalTitle").textContent = "Editar Cliente";
+    document.getElementById("clientForm").action = `/clientes/editar/${id}`;
+    document.getElementById("clientId").value = id;
+    document.getElementById("nombre").value = nombre;
+    document.getElementById("telefono").value = telefono || "";
+    document.getElementById("email").value = email || "";
+    document.getElementById("tipo").value = tipo;
+  }
+</script>
+
+{% endblock %}

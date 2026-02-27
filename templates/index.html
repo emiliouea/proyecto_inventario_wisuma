@@ -1,48 +1,193 @@
 {% extends "base.html" %} {% block title %}Inicio - Ferretería Senguana{%
 endblock %} {% block content %}
-<div class="welcome-section">
-  <h2>Bienvenido al Sistema de Inventario</h2>
-  <p>Gestiona eficientemente el inventario de tu ferretería</p>
+<!-- Hero Section -->
+<div class="text-center mb-5">
+  <h1 class="display-4">
+    <i class="bi bi-shop"></i> Bienvenido al Sistema de Inventario
+  </h1>
+  <p class="lead text-muted">
+    Gestiona eficientemente el inventario de tu ferretería con POO y SQLite
+  </p>
 </div>
 
-<div class="dashboard">
-  <a href="{{ url_for('productos') }}" class="card-link">
-    <div class="card">
-      <h3>Productos</h3>
-      <p>Gestiona el catálogo de productos disponibles</p>
-    </div>
-  </a>
+<!-- Cards de Navegación Rápida -->
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <a href="{{ url_for('productos') }}" class="text-decoration-none">
+      <div class="card h-100 shadow-sm hover-card">
+        <div class="card-body text-center">
+          <i class="bi bi-box-seam display-1 text-primary"></i>
+          <h3 class="card-title mt-3">Productos</h3>
+          <p class="card-text text-muted">
+            Gestiona el catálogo de productos disponibles
+          </p>
+        </div>
+      </div>
+    </a>
+  </div>
 
-  <a href="{{ url_for('clientes') }}" class="card-link">
-    <div class="card">
-      <h3>Clientes</h3>
-      <p>Administra la información de tus clientes</p>
-    </div>
-  </a>
+  <div class="col-md-4">
+    <a href="{{ url_for('clientes') }}" class="text-decoration-none">
+      <div class="card h-100 shadow-sm hover-card">
+        <div class="card-body text-center">
+          <i class="bi bi-people display-1 text-success"></i>
+          <h3 class="card-title mt-3">Clientes</h3>
+          <p class="card-text text-muted">
+            Administra la información de tus clientes
+          </p>
+        </div>
+      </div>
+    </a>
+  </div>
 
-  <a href="{{ url_for('facturas') }}" class="card-link">
-    <div class="card">
-      <h3>Facturas</h3>
-      <p>Consulta y genera facturas de venta</p>
-    </div>
-  </a>
+  <div class="col-md-4">
+    <a href="{{ url_for('facturas') }}" class="text-decoration-none">
+      <div class="card h-100 shadow-sm hover-card">
+        <div class="card-body text-center">
+          <i class="bi bi-receipt display-1 text-info"></i>
+          <h3 class="card-title mt-3">Facturas</h3>
+          <p class="card-text text-muted">
+            Consulta y genera facturas de venta
+          </p>
+        </div>
+      </div>
+    </a>
+  </div>
 </div>
 
-<div class="stats">
-  <h3>Estadísticas Rápidas</h3>
-  <div class="stats-grid">
-    <div class="stat-item">
-      <span class="stat-number">{{ total_productos }}</span>
-      <span class="stat-label">Productos en Stock</span>
+<!-- Estadísticas del Inventario -->
+<h3 class="mb-4"><i class="bi bi-graph-up"></i> Estadísticas del Inventario</h3>
+<div class="row g-4 mb-5">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary shadow">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-title text-uppercase mb-0">Productos</h6>
+            <h2 class="mb-0">{{ total_productos }}</h2>
+          </div>
+          <i class="bi bi-box-seam display-4 opacity-50"></i>
+        </div>
+      </div>
     </div>
-    <div class="stat-item">
-      <span class="stat-number">{{ total_clientes }}</span>
-      <span class="stat-label">Clientes Registrados</span>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-white bg-success shadow">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-title text-uppercase mb-0">Clientes</h6>
+            <h2 class="mb-0">{{ total_clientes }}</h2>
+          </div>
+          <i class="bi bi-people display-4 opacity-50"></i>
+        </div>
+      </div>
     </div>
-    <div class="stat-item">
-      <span class="stat-number">{{ total_facturas }}</span>
-      <span class="stat-label">Facturas Emitidas</span>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-white bg-info shadow">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-title text-uppercase mb-0">Facturas</h6>
+            <h2 class="mb-0">{{ total_facturas }}</h2>
+          </div>
+          <i class="bi bi-receipt display-4 opacity-50"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-white bg-warning shadow">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-title text-uppercase mb-0 text-dark">
+              Valor Total
+            </h6>
+            <h2 class="mb-0 text-dark">
+              ${{ "%.2f"|format(estadisticas.valor_total) }}
+            </h2>
+          </div>
+          <i class="bi bi-currency-dollar display-4 opacity-50"></i>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Alertas de Stock Bajo -->
+{% if estadisticas.productos_bajo_stock %}
+<div class="alert alert-warning shadow-sm" role="alert">
+  <h4 class="alert-heading">
+    <i class="bi bi-exclamation-triangle"></i> Productos con Bajo Stock
+  </h4>
+  <hr />
+  <div class="row g-2">
+    {% for producto in estadisticas.productos_bajo_stock %}
+    <div class="col-md-6">
+      <div
+        class="d-flex justify-content-between align-items-center p-2 bg-white rounded"
+      >
+        <span><strong>{{ producto.nombre }}</strong></span>
+        <div>
+          <span class="badge bg-danger">{{ producto.stock }} unidades</span>
+          <a
+            href="{{ url_for('producto_editar', producto_id=producto.id) }}"
+            class="btn btn-sm btn-outline-primary ms-2"
+          >
+            <i class="bi bi-pencil"></i> Actualizar
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Productos por Categoría -->
+<h3 class="mb-4"><i class="bi bi-tags"></i> Productos por Categoría</h3>
+<div class="row g-3">
+  {% for categoria in estadisticas.categorias %}
+  <div class="col-md-4">
+    <a
+      href="{{ url_for('productos', categoria=categoria) }}"
+      class="text-decoration-none"
+    >
+      <div class="card shadow-sm hover-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0">{{ categoria }}</h5>
+              <p class="text-muted mb-0">
+                {{ estadisticas.productos_por_categoria[categoria]|length }}
+                productos
+              </p>
+            </div>
+            <i class="bi bi-arrow-right-circle display-6 text-primary"></i>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .hover-card {
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+</style>
+
 {% endblock %}

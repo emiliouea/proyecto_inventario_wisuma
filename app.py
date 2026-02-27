@@ -1,115 +1,233 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, flash
 import os
+from inventario import Inventario
+from models import Producto, Cliente
 
 app = Flask(__name__)
+app.secret_key = 'tu_clave_secreta_aqui_2026'  # Necesario para flash messages
 
-# Datos de ejemplo (simulando una base de datos)
-productos_data = [
-    {
-        'codigo': 'FER001',
-        'nombre': 'Martillo de Carpintero',
-        'categoria': 'Herramientas',
-        'precio': 15.99,
-        'stock': 45,
-        'ubicacion': 'Bodega A - Estante 3',
-        'descripcion': 'Martillo profesional con mango de madera, ideal para trabajos de carpintería.'
-    },
-    {
-        'codigo': 'FER002',
-        'nombre': 'Destornillador Phillips',
-        'categoria': 'Herramientas',
-        'precio': 8.50,
-        'stock': 120,
-        'ubicacion': 'Bodega A - Estante 5',
-        'descripcion': 'Destornillador de precisión con punta magnética.'
-    },
-    {
-        'codigo': 'FER003',
-        'nombre': 'Taladro Eléctrico',
-        'categoria': 'Herramientas Eléctricas',
-        'precio': 89.99,
-        'stock': 12,
-        'ubicacion': 'Bodega B - Estante 1',
-        'descripcion': 'Taladro eléctrico de 500W con velocidad variable y reversible.'
-    },
-    {
-        'codigo': 'FER004',
-        'nombre': 'Pintura Látex Blanca',
-        'categoria': 'Pinturas',
-        'precio': 25.00,
-        'stock': 30,
-        'ubicacion': 'Bodega C - Estante 2',
-        'descripcion': 'Pintura látex de alta calidad, rendimiento 12 m²/litro.'
-    },
-    {
-        'codigo': 'FER005',
-        'nombre': 'Cemento Portland',
-        'categoria': 'Construcción',
-        'precio': 12.50,
-        'stock': 200,
-        'ubicacion': 'Bodega D - Piso',
-        'descripcion': 'Cemento Portland tipo I, saco de 50kg.'
-    },
-    {
-        'codigo': 'FER006',
-        'nombre': 'Cinta Métrica 5m',
-        'categoria': 'Herramientas',
-        'precio': 6.75,
-        'stock': 80,
-        'ubicacion': 'Bodega A - Estante 4',
-        'descripcion': 'Cinta métrica retráctil de 5 metros con freno automático.'
-    }
-]
+# Inicializar el sistema de inventario con POO y SQLite
+inventario = Inventario()
 
-clientes_data = [
-    {'id': 'CLI001', 'nombre': 'Juan Pérez', 'telefono': '555-1234', 'email': 'juan@email.com', 'tipo': 'Regular'},
-    {'id': 'CLI002', 'nombre': 'María González', 'telefono': '555-5678', 'email': 'maria@email.com', 'tipo': 'Premium'},
-    {'id': 'CLI003', 'nombre': 'Carlos Rodríguez', 'telefono': '555-9012', 'email': 'carlos@email.com', 'tipo': 'Regular'},
-    {'id': 'CLI004', 'nombre': 'Ana Martínez', 'telefono': '555-3456', 'email': 'ana@email.com', 'tipo': 'Premium'},
-]
+# ==================== RUTAS PRINCIPALES ====================
 
-facturas_data = [
-    {'numero': 'FAC-001', 'fecha': '2026-02-15', 'cliente': 'Juan Pérez', 'total': 125.50, 'estado': 'pagado'},
-    {'numero': 'FAC-002', 'fecha': '2026-02-18', 'cliente': 'María González', 'total': 89.99, 'estado': 'pagado'},
-    {'numero': 'FAC-003', 'fecha': '2026-02-20', 'cliente': 'Carlos Rodríguez', 'total': 250.00, 'estado': 'pendiente'},
-    {'numero': 'FAC-004', 'fecha': '2026-02-21', 'cliente': 'Ana Martínez', 'total': 45.75, 'estado': 'pagado'},
-]
-
-# Ruta principal
 @app.route('/')
 def inicio():
+    """Página principal con estadísticas del inventario"""
+    estadisticas = inventario.obtener_estadisticas()
+    productos = inventario.obtener_todos_productos()
+    clientes = inventario.obtener_todos_clientes()
+    facturas = inventario.obtener_todas_facturas()
+    
     return render_template('index.html',
-                         total_productos=len(productos_data),
-                         total_clientes=len(clientes_data),
-                         total_facturas=len(facturas_data))
+                         total_productos=len(productos),
+                         total_clientes=len(clientes),
+                         total_facturas=len(facturas),
+                         estadisticas=estadisticas)
 
-# Ruta de productos
+# ==================== RUTAS DE PRODUCTOS (CRUD) ====================
+
 @app.route('/productos')
 def productos():
-    return render_template('productos.html', productos=productos_data)
+    """Lista todos los productos del inventario"""
+    categoria = request.args.get('categoria', '')
+    busqueda = request.args.get('busqueda', '')
+    
+    if categoria:
+        productos_list = inventario.obtener_productos_por_categoria(categoria)
+    elif busqueda:
+        productos_list = inventario.buscar_productos_por_nombre(busqueda)
+    else:
+        productos_list = inventario.obtener_todos_productos()
+    
+    categorias = inventario.obtener_categorias()
+    
+    # Convertir objetos Producto a diccionarios para las plantillas
+    productos_dict = [p.to_dict() for p in productos_list]
+    
+    return render_template('productos.html', 
+                         productos=productos_dict,
+                         categorias=categorias,
+                         categoria_actual=categoria,
+                         busqueda_actual=busqueda)
 
-# Ruta dinámica para ver detalle de un producto
+@app.route('/productos/nuevo', methods=['GET', 'POST'])
+def producto_nuevo():
+    """Formulario para agregar un nuevo producto"""
+    if request.method == 'POST':
+        # Crear objeto Producto con los datos del formulario
+        producto = Producto(
+            codigo=request.form['codigo'],
+            nombre=request.form['nombre'],
+            categoria=request.form['categoria'],
+            precio=float(request.form['precio']),
+            stock=int(request.form['stock']),
+            ubicacion=request.form['ubicacion'],
+            descripcion=request.form['descripcion']
+        )
+        
+        exito, mensaje = inventario.agregar_producto(producto)
+        
+        if exito:
+            flash(mensaje, 'success')
+            return redirect(url_for('productos'))
+        else:
+            flash(mensaje, 'error')
+    
+    categorias = inventario.obtener_categorias()
+    return render_template('producto_form.html', 
+                         producto=None, 
+                         categorias=categorias,
+                         accion='Agregar')
+
+@app.route('/productos/editar/<int:producto_id>', methods=['GET', 'POST'])
+def producto_editar(producto_id):
+    """Formulario para editar un producto existente"""
+    producto = inventario.obtener_producto_por_id(producto_id)
+    
+    if not producto:
+        flash('Producto no encontrado', 'error')
+        return redirect(url_for('productos'))
+    
+    if request.method == 'POST':
+        exito, mensaje = inventario.actualizar_producto(
+            producto_id,
+            codigo=request.form['codigo'],
+            nombre=request.form['nombre'],
+            categoria=request.form['categoria'],
+            precio=float(request.form['precio']),
+            stock=int(request.form['stock']),
+            ubicacion=request.form['ubicacion'],
+            descripcion=request.form['descripcion']
+        )
+        
+        if exito:
+            flash(mensaje, 'success')
+            return redirect(url_for('productos'))
+        else:
+            flash(mensaje, 'error')
+    
+    categorias = inventario.obtener_categorias()
+    return render_template('producto_form.html', 
+                         producto=producto.to_dict(),
+                         categorias=categorias,
+                         accion='Editar')
+
+@app.route('/productos/eliminar/<int:producto_id>', methods=['POST'])
+def producto_eliminar(producto_id):
+    """Elimina un producto del inventario"""
+    exito, mensaje = inventario.eliminar_producto(producto_id)
+    
+    if exito:
+        flash(mensaje, 'success')
+    else:
+        flash(mensaje, 'error')
+    
+    return redirect(url_for('productos'))
+
 @app.route('/item/<codigo>')
 def item(codigo):
-    producto = next((p for p in productos_data if p['codigo'] == codigo), None)
+    """Detalle de un producto específico"""
+    producto = inventario.obtener_producto_por_codigo(codigo)
+    
     if producto:
-        return render_template('item_detalle.html', codigo=codigo, producto=producto)
+        return render_template('item_detalle.html', 
+                             codigo=codigo, 
+                             producto=producto.to_dict())
     else:
-        return f"Producto con código {codigo} no encontrado.", 404
+        flash(f"Producto con código {codigo} no encontrado", 'error')
+        return redirect(url_for('productos'))
 
-# Ruta de clientes
+# ==================== RUTAS DE CLIENTES (CRUD) ====================
+
 @app.route('/clientes')
 def clientes():
-    return render_template('clientes.html', clientes=clientes_data)
+    """Lista todos los clientes"""
+    clientes_list = inventario.obtener_todos_clientes()
+    clientes_dict = [c.to_dict() for c in clientes_list]
+    return render_template('clientes.html', clientes=clientes_dict)
 
-# Ruta de facturas
+@app.route('/clientes/nuevo', methods=['GET', 'POST'])
+def cliente_nuevo():
+    """Formulario para agregar un nuevo cliente"""
+    if request.method == 'POST':
+        cliente = Cliente(
+            nombre=request.form['nombre'],
+            telefono=request.form['telefono'],
+            email=request.form['email'],
+            tipo=request.form['tipo']
+        )
+        
+        exito, mensaje = inventario.agregar_cliente(cliente)
+        
+        if exito:
+            flash(mensaje, 'success')
+            return redirect(url_for('clientes'))
+        else:
+            flash(mensaje, 'error')
+    
+    return render_template('cliente_form.html', cliente=None, accion='Agregar')
+
+@app.route('/clientes/editar/<int:cliente_id>', methods=['GET', 'POST'])
+def cliente_editar(cliente_id):
+    """Formulario para editar un cliente existente"""
+    cliente = inventario.obtener_cliente_por_id(cliente_id)
+    
+    if not cliente:
+        flash('Cliente no encontrado', 'error')
+        return redirect(url_for('clientes'))
+    
+    if request.method == 'POST':
+        exito, mensaje = inventario.actualizar_cliente(
+            cliente_id,
+            nombre=request.form['nombre'],
+            telefono=request.form['telefono'],
+            email=request.form['email'],
+            tipo=request.form['tipo']
+        )
+        
+        if exito:
+            flash(mensaje, 'success')
+            return redirect(url_for('clientes'))
+        else:
+            flash(mensaje, 'error')
+    
+    return render_template('cliente_form.html', 
+                         cliente=cliente.to_dict(),
+                         accion='Editar')
+
+@app.route('/clientes/eliminar/<int:cliente_id>', methods=['POST'])
+def cliente_eliminar(cliente_id):
+    """Elimina un cliente"""
+    exito, mensaje = inventario.eliminar_cliente(cliente_id)
+    
+    if exito:
+        flash(mensaje, 'success')
+    else:
+        flash(mensaje, 'error')
+    
+    return redirect(url_for('clientes'))
+
+# ==================== RUTAS DE FACTURAS ====================
+
 @app.route('/facturas')
 def facturas():
-    return render_template('facturas.html', facturas=facturas_data)
+    """Lista todas las facturas"""
+    facturas_list = inventario.obtener_todas_facturas()
+    facturas_dict = []
+    
+    for factura in facturas_list:
+        factura_dict = factura.to_dict()
+        factura_dict['cliente'] = factura.cliente_nombre
+        facturas_dict.append(factura_dict)
+    
+    return render_template('facturas.html', facturas=facturas_dict)
 
-# Ruta "Acerca de"
+# ==================== RUTA ACERCA DE ====================
+
 @app.route('/about')
 def about():
+    """Página de información del sistema"""
     return render_template('about.html')
 
 if __name__ == '__main__':
