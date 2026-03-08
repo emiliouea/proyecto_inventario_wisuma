@@ -20,13 +20,13 @@ endblock %} {% block content %}
     <tbody>
       {% for factura in facturas %}
       <tr>
-        <td><strong>{{ factura.numero }}</strong></td>
+        <td><strong>{{ factura.id }}</strong></td>
         <td>{{ factura.fecha }}</td>
-        <td>{{ factura.cliente }}</td>
-        <td>${{ "%.2f"|format(factura.total) }}</td>
+        <td>{{ factura.cliente_nombre }}</td>
+        <td>${{ "%.2f"|format(factura.valor_total) }}</td>
         <td>
-          <span class="badge badge-{{ factura.estado }}"
-            >{{ factura.estado }}</span
+          <span class="badge badge-info"
+            >Pendiente</span
           >
         </td>
         <td>

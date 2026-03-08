@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}Producto {{ codigo }} - Ferretería
+{% extends "base.html" %} {% block title %}Producto ID {{ producto_id }} - Ferretería
 Senguana{% endblock %} {% block content %}
 <div class="page-header">
   <h2>Detalle del Producto</h2>
@@ -9,11 +9,9 @@ Senguana{% endblock %} {% block content %}
   <div class="detail-card">
     <h3>{{ producto.nombre }}</h3>
     <div class="detail-info">
-      <p><strong>Código:</strong> {{ producto.codigo }}</p>
-      <p><strong>Categoría:</strong> {{ producto.categoria }}</p>
+      <p><strong>ID:</strong> {{ producto.id }}</p>
       <p><strong>Precio:</strong> ${{ "%.2f"|format(producto.precio) }}</p>
       <p><strong>Stock Disponible:</strong> {{ producto.stock }} unidades</p>
-      <p><strong>Ubicación:</strong> {{ producto.ubicacion }}</p>
       <p>
         <strong>Estado:</strong>
         <span

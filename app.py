@@ -1,28 +1,65 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import os
-from inventario import Inventario
-from models import Producto, Cliente
+from inventario.database import db # Import db from its own module
 
-app = Flask(__name__)
-app.secret_key = 'tu_clave_secreta_aqui_2026'  # Necesario para flash messages
+def create_app():
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///inventario.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.secret_key = 'tu_clave_secreta_aqui_2026'
 
-# Inicializar el sistema de inventario con POO y SQLite
-inventario = Inventario()
+    db.init_app(app)
+
+    return app
+
+app = create_app()
+
+# Import models and inventario AFTER app and db are initialized
+from inventario.productos import Producto
+from inventario.clientes import Cliente # Temporary import for now
+from inventario.inventario import Inventario
+
+with app.app_context():
+    db.drop_all()  # Elimina todas las tablas existentes
+    db.create_all() # Crea todas las tablas nuevamente
+    print("Database tables dropped and recreated.")
+
+inventario = Inventario(app, db, Producto, Cliente)
 
 # ==================== RUTAS PRINCIPALES ====================
 
 @app.route('/')
 def inicio():
     """Página principal con estadísticas del inventario"""
-    estadisticas = inventario.obtener_estadisticas()
-    productos = inventario.obtener_todos_productos()
-    clientes = inventario.obtener_todos_clientes()
-    facturas = inventario.obtener_todas_facturas()
-    
+    # TODO: Implementar obtener_estadisticas, obtener_todos_clientes, obtener_todas_facturas con SQLAlchemy
+    # For now, return placeholder values
+    total_productos = len(inventario.obtener_todos_productos())
+    total_clientes = len(inventario.obtener_todos_clientes())
+
+    # Obtener categorías y productos por categoría para el index
+    categorias = inventario.obtener_categorias()
+    productos_por_categoria = {}
+    valor_total_inventario = 0
+
+    for categoria in categorias:
+        productos_en_categoria = inventario.obtener_productos_por_categoria(categoria)
+        productos_por_categoria[categoria] = [p.to_dict() for p in productos_en_categoria]
+        for p in productos_en_categoria:
+            valor_total_inventario += p.precio * p.stock
+
+    estadisticas = {
+        "valor_total": valor_total_inventario,
+        "categorias": categorias,
+        "productos_por_categoria": productos_por_categoria
+    }
+
+    # Marcador de posición para total_facturas ya que el modelo aún no está implementado
+    total_facturas = 0
+
     return render_template('index.html',
-                         total_productos=len(productos),
-                         total_clientes=len(clientes),
-                         total_facturas=len(facturas),
+                         total_productos=total_productos,
+                         total_clientes=total_clientes,
+                         total_facturas=total_facturas,
                          estadisticas=estadisticas)
 
 # ==================== RUTAS DE PRODUCTOS (CRUD) ====================
@@ -39,9 +76,9 @@ def productos():
         productos_list = inventario.buscar_productos_por_nombre(busqueda)
     else:
         productos_list = inventario.obtener_todos_productos()
-    
+
     categorias = inventario.obtener_categorias()
-    
+
     # Convertir objetos Producto a diccionarios para las plantillas
     productos_dict = [p.to_dict() for p in productos_list]
     
@@ -57,12 +94,11 @@ def producto_nuevo():
     if request.method == 'POST':
         # Crear objeto Producto con los datos del formulario
         producto = Producto(
-            codigo=request.form['codigo'],
+            # codigo=request.form['codigo'], # Removed 'codigo' as per new model
             nombre=request.form['nombre'],
             categoria=request.form['categoria'],
             precio=float(request.form['precio']),
             stock=int(request.form['stock']),
-            ubicacion=request.form['ubicacion'],
             descripcion=request.form['descripcion']
         )
         
@@ -74,7 +110,8 @@ def producto_nuevo():
         else:
             flash(mensaje, 'error')
     
-    categorias = inventario.obtener_categorias()
+    # categorias = inventario.obtener_categorias()
+    categorias = [] # Placeholder
     return render_template('producto_form.html', 
                          producto=None, 
                          categorias=categorias,
@@ -92,12 +129,10 @@ def producto_editar(producto_id):
     if request.method == 'POST':
         exito, mensaje = inventario.actualizar_producto(
             producto_id,
-            codigo=request.form['codigo'],
             nombre=request.form['nombre'],
             categoria=request.form['categoria'],
             precio=float(request.form['precio']),
             stock=int(request.form['stock']),
-            ubicacion=request.form['ubicacion'],
             descripcion=request.form['descripcion']
         )
         
@@ -107,7 +142,8 @@ def producto_editar(producto_id):
         else:
             flash(mensaje, 'error')
     
-    categorias = inventario.obtener_categorias()
+    # categorias = inventario.obtener_categorias()
+    categorias = [] # Placeholder
     return render_template('producto_form.html', 
                          producto=producto.to_dict(),
                          categorias=categorias,
@@ -125,17 +161,17 @@ def producto_eliminar(producto_id):
     
     return redirect(url_for('productos'))
 
-@app.route('/item/<codigo>')
-def item(codigo):
+@app.route('/item/<int:producto_id>')
+def item(producto_id):
     """Detalle de un producto específico"""
-    producto = inventario.obtener_producto_por_codigo(codigo)
-    
+    producto = inventario.obtener_producto_por_id(producto_id)
+
     if producto:
-        return render_template('item_detalle.html', 
-                             codigo=codigo, 
+        return render_template('item_detalle.html',
+                             producto_id=producto_id,
                              producto=producto.to_dict())
     else:
-        flash(f"Producto con código {codigo} no encontrado", 'error')
+        flash(f"Producto con ID {producto_id} no encontrado", 'error')
         return redirect(url_for('productos'))
 
 # ==================== RUTAS DE CLIENTES (CRUD) ====================
@@ -213,15 +249,84 @@ def cliente_eliminar(cliente_id):
 @app.route('/facturas')
 def facturas():
     """Lista todas las facturas"""
-    facturas_list = inventario.obtener_todas_facturas()
+    # facturas_list = inventario.obtener_todas_facturas()
+    facturas_list = [
+        {"id": 1, "cliente_nombre": "Cliente A", "fecha": "2026-03-01", "valor_total": 150.75},
+        {"id": 2, "cliente_nombre": "Cliente B", "fecha": "2026-03-05", "valor_total": 200.00}
+    ] # Placeholder con datos de ejemplo
     facturas_dict = []
     
     for factura in facturas_list:
-        factura_dict = factura.to_dict()
-        factura_dict['cliente'] = factura.cliente_nombre
+        factura_dict = factura
         facturas_dict.append(factura_dict)
     
     return render_template('facturas.html', facturas=facturas_dict)
+
+@app.route('/datos/txt')
+def datos_txt():
+    productos_cargados, mensaje = inventario.cargar_productos_txt()
+    if not productos_cargados:
+        flash(mensaje, 'info')
+    return render_template('datos.html', data=productos_cargados, tipo='TXT')
+
+@app.route('/datos/txt/guardar', methods=['POST'])
+def guardar_txt():
+    exito, mensaje = inventario.guardar_productos_txt()
+    flash(mensaje, 'success' if exito else 'error')
+    return redirect(url_for('datos_txt'))
+
+@app.route('/datos/txt/cargar', methods=['POST'])
+def cargar_txt():
+    productos_cargados, mensaje = inventario.cargar_productos_txt()
+    for producto_dict in productos_cargados:
+        producto = Producto.from_dict(producto_dict)
+        inventario.agregar_producto(producto)
+    flash(mensaje, 'success')
+    return redirect(url_for('datos_txt'))
+
+@app.route('/datos/json')
+def datos_json():
+    productos_cargados, mensaje = inventario.cargar_productos_json()
+    if not productos_cargados:
+        flash(mensaje, 'info')
+    return render_template('datos.html', data=productos_cargados, tipo='JSON')
+
+@app.route('/datos/json/guardar', methods=['POST'])
+def guardar_json():
+    exito, mensaje = inventario.guardar_productos_json()
+    flash(mensaje, 'success' if exito else 'error')
+    return redirect(url_for('datos_json'))
+
+@app.route('/datos/csv')
+def datos_csv():
+    productos_cargados, mensaje = inventario.cargar_productos_csv()
+    if not productos_cargados:
+        flash(mensaje, 'info')
+    return render_template('datos.html', data=productos_cargados, tipo='CSV')
+
+@app.route('/datos/csv/guardar', methods=['POST'])
+def guardar_csv():
+    exito, mensaje = inventario.guardar_productos_csv()
+    flash(mensaje, 'success' if exito else 'error')
+    return redirect(url_for('datos_csv'))
+
+@app.route('/datos/csv/cargar', methods=['POST'])
+def cargar_csv():
+    productos_cargados, mensaje = inventario.cargar_productos_csv()
+    for producto_dict in productos_cargados:
+        producto = Producto.from_dict(producto_dict)
+        inventario.agregar_producto(producto)
+    flash(mensaje, 'success')
+    return redirect(url_for('datos_csv'))
+
+@app.route('/datos/json/cargar', methods=['POST'])
+def cargar_json():
+    productos_cargados, mensaje = inventario.cargar_productos_json()
+    for producto_dict in productos_cargados:
+        producto = Producto.from_dict(producto_dict)
+        inventario.agregar_producto(producto)
+    flash(mensaje, 'success')
+    return redirect(url_for('datos_json'))
 
 # ==================== RUTA ACERCA DE ====================
 

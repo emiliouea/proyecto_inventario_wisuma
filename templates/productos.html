@@ -54,6 +54,11 @@ endblock %} {% block content %}
 
     <div class="mt-3">
       <span class="me-2"><strong>Categorías:</strong></span>
+      <a
+        href="{{ url_for('productos') }}"
+        class="badge {% if not categoria_actual %}bg-primary{% else %}bg-secondary{% endif %} text-decoration-none me-1"
+        >Todas</a
+      >
       {% for cat in categorias %}
       <a
         href="{{ url_for('productos', categoria=cat) }}"
@@ -74,7 +79,7 @@ endblock %} {% block content %}
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <h5 class="card-title">{{ producto.nombre }}</h5>
-          <span class="badge bg-info">{{ producto.codigo }}</span>
+          <span class="badge bg-info">ID: {{ producto.id }}</span>
         </div>
         <p class="card-text">
           <span class="badge bg-secondary">{{ producto.categoria }}</span>
@@ -92,7 +97,7 @@ endblock %} {% block content %}
       <div class="card-footer bg-transparent">
         <div class="btn-group w-100" role="group">
           <a
-            href="{{ url_for('item', codigo=producto.codigo) }}"
+            href="{{ url_for('item', producto_id=producto.id) }}"
             class="btn btn-sm btn-primary"
           >
             <i class="bi bi-eye"></i> Ver
@@ -103,12 +108,10 @@ endblock %} {% block content %}
             data-bs-target="#productModal"
             onclick="editProduct(this)"
             data-id="{{ producto.id }}"
-            data-codigo="{{ producto.codigo }}"
             data-nombre="{{ producto.nombre }}"
             data-categoria="{{ producto.categoria }}"
             data-precio="{{ producto.precio }}"
             data-stock="{{ producto.stock }}"
-            data-ubicacion="{{ producto.ubicacion }}"
             data-descripcion="{{ producto.descripcion }}"
           >
             <i class="bi bi-pencil"></i> Editar
@@ -176,19 +179,6 @@ endblock %} {% block content %}
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label for="codigo" class="form-label"
-                >Código del Producto *</label
-              >
-              <input
-                type="text"
-                class="form-control"
-                id="codigo"
-                name="codigo"
-                required
-                placeholder="Ej: FER001"
-              />
-            </div>
-            <div class="col-md-6">
               <label for="categoria" class="form-label">Categoría *</label>
               <input
                 type="text"
@@ -201,10 +191,11 @@ endblock %} {% block content %}
               />
               <datalist id="categorias-list">
                 {% for cat in categorias %}
-                <option value="{{ cat }}">{% endfor %}</option>
+                <option value="{{ cat }}"></option>
+                {% endfor %}
               </datalist>
             </div>
-            <div class="col-12">
+            <div class="col-md-6">
               <label for="nombre" class="form-label"
                 >Nombre del Producto *</label
               >
@@ -219,16 +210,19 @@ endblock %} {% block content %}
             </div>
             <div class="col-md-4">
               <label for="precio" class="form-label">Precio ($) *</label>
-              <input
-                type="number"
-                class="form-control"
-                id="precio"
-                name="precio"
-                step="0.01"
-                min="0"
-                required
-                placeholder="0.00"
-              />
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="precio"
+                  name="precio"
+                  step="0.01"
+                  min="0"
+                  required
+                  placeholder="0.00"
+                />
+              </div>
             </div>
             <div class="col-md-4">
               <label for="stock" class="form-label">Stock (unidades) *</label>
@@ -240,16 +234,6 @@ endblock %} {% block content %}
                 min="0"
                 required
                 placeholder="0"
-              />
-            </div>
-            <div class="col-md-4">
-              <label for="ubicacion" class="form-label">Ubicación</label>
-              <input
-                type="text"
-                class="form-control"
-                id="ubicacion"
-                name="ubicacion"
-                placeholder="Bodega A - Estante 3"
               />
             </div>
             <div class="col-12">
@@ -288,27 +272,25 @@ endblock %} {% block content %}
       "{{ url_for('producto_nuevo') }}";
     document.getElementById("productForm").reset();
     document.getElementById("productId").value = "";
+    // Clear category input if it's not a pre-filled edit
+    document.getElementById("categoria").value = "";
   }
 
   function editProduct(button) {
     const id = button.getAttribute("data-id");
-    const codigo = button.getAttribute("data-codigo");
     const nombre = button.getAttribute("data-nombre");
     const categoria = button.getAttribute("data-categoria");
     const precio = button.getAttribute("data-precio");
     const stock = button.getAttribute("data-stock");
-    const ubicacion = button.getAttribute("data-ubicacion");
     const descripcion = button.getAttribute("data-descripcion");
 
     document.getElementById("modalTitle").textContent = "Editar Producto";
     document.getElementById("productForm").action = `/productos/editar/${id}`;
     document.getElementById("productId").value = id;
-    document.getElementById("codigo").value = codigo;
     document.getElementById("nombre").value = nombre;
     document.getElementById("categoria").value = categoria;
     document.getElementById("precio").value = precio;
     document.getElementById("stock").value = stock;
-    document.getElementById("ubicacion").value = ubicacion || "";
     document.getElementById("descripcion").value = descripcion || "";
   }
 </script>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Datos desde Archivo {{ tipo }}</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="mb-3">
+        <form action="{{ url_for('guardar_txt') }}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-success">Guardar Productos a TXT</button>
+        </form>
+        <form action="{{ url_for('cargar_txt') }}" method="post" class="d-inline ms-2">
+            <button type="submit" class="btn btn-info">Cargar Productos desde TXT</button>
+        </form>
+    </div>
+
+    {% if data %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        {% for key in data[0].keys() %}
+                            <th scope="col">{{ key.capitalize() }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                        <tr>
+                            {% for value in item.values() %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No hay datos disponibles para mostrar.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -32,45 +32,6 @@ Senguana{% endblock %} {% block content %}
     <div class="card shadow-sm">
       <div class="card-body">
         <form method="POST">
-          <!-- Código y Categoría - Bootstrap Grid -->
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label for="codigo" class="form-label">
-                <i class="bi bi-upc-scan"></i> Código del Producto *
-              </label>
-              <input
-                type="text"
-                class="form-control"
-                id="codigo"
-                name="codigo"
-                value="{{ producto.codigo if producto else '' }}"
-                required
-                placeholder="Ej: FER001"
-              />
-            </div>
-
-            <div class="col-md-6">
-              <label for="categoria" class="form-label">
-                <i class="bi bi-tags"></i> Categoría *
-              </label>
-              <input
-                type="text"
-                class="form-control"
-                id="categoria"
-                name="categoria"
-                value="{{ producto.categoria if producto else '' }}"
-                required
-                list="categorias-list"
-                placeholder="Ej: Herramientas"
-              />
-              <datalist id="categorias-list">
-                {% for cat in categorias %}
-                <option value="{{ cat }}">{% endfor %}</option>
-              </datalist>
-            </div>
-          </div>
-
-          <!-- Nombre - Full Width -->
           <div class="mb-3">
             <label for="nombre" class="form-label">
               <i class="bi bi-box"></i> Nombre del Producto *
@@ -86,7 +47,29 @@ Senguana{% endblock %} {% block content %}
             />
           </div>
 
-          <!-- Precio, Stock, Ubicación - Bootstrap Grid -->
+          <!-- Categoría - Full Width -->
+          <div class="mb-3">
+            <label for="categoria" class="form-label">
+              <i class="bi bi-tag"></i> Categoría *
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="categoria"
+              name="categoria"
+              value="{{ producto.categoria if producto else '' }}"
+              required
+              list="categorias-list"
+              placeholder="Ej: Herramientas"
+            />
+            <datalist id="categorias-list">
+              {% for cat in categorias %}
+              <option value="{{ cat }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+
+          <!-- Precio, Stock - Bootstrap Grid -->
           <div class="row g-3 mb-3">
             <div class="col-md-4">
               <label for="precio" class="form-label">
@@ -121,20 +104,6 @@ Senguana{% endblock %} {% block content %}
                 value="{{ producto.stock if producto else '' }}"
                 required
                 placeholder="0"
-              />
-            </div>
-
-            <div class="col-md-4">
-              <label for="ubicacion" class="form-label">
-                <i class="bi bi-geo-alt"></i> Ubicación
-              </label>
-              <input
-                type="text"
-                class="form-control"
-                id="ubicacion"
-                name="ubicacion"
-                value="{{ producto.ubicacion if producto else '' }}"
-                placeholder="Bodega A - Estante 3"
               />
             </div>
           </div>
