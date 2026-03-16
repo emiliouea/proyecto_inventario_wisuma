@@ -7,11 +7,12 @@ Implementa la clase Inventario con operaciones CRUD usando colecciones de Python
 from .file_persistence import save_data_to_txt, load_data_from_txt, save_data_to_json, load_data_from_json, save_data_to_csv, load_data_from_csv
 
 class Inventario:
-    def __init__(self, app, db, Producto, Cliente):
+    def __init__(self, app, db, Producto, Cliente, **kwargs):
         self.app = app
         self.db = db
         self.Producto = Producto
         self.Cliente = Cliente
+        self.Usuario = kwargs.get('Usuario', None) # Se agrega Usuario opcionalmente para retrocompatibilidad
 
     
     # ==================== OPERACIONES CRUD DE PRODUCTOS ====================
@@ -155,3 +156,41 @@ class Inventario:
                 print(f"Error al convertir datos de JSON: {e} en {item_dict}")
                 continue
         return productos, mensaje
+
+    # ==================== OPERACIONES CRUD DE USUARIOS ====================
+
+    def agregar_usuario(self, usuario):
+        with self.app.app_context():
+            nombre_usuario = usuario.nombre
+            self.db.session.add(usuario)
+            self.db.session.commit()
+        return True, f"Usuario {nombre_usuario} agregado exitosamente"
+
+    def obtener_todos_usuarios(self):
+        with self.app.app_context():
+            if not self.Usuario:
+                return []
+            return self.Usuario.query.all()
+
+    def obtener_usuario_por_id(self, id_usuario):
+        with self.app.app_context():
+            return self.Usuario.query.get(id_usuario)
+
+    def actualizar_usuario(self, id_usuario, **kwargs):
+        with self.app.app_context():
+            usuario = self.Usuario.query.get(id_usuario)
+            if not usuario:
+                return False, "Usuario no encontrado"
+            for key, value in kwargs.items():
+                setattr(usuario, key, value)
+            self.db.session.commit()
+            return True, "Usuario actualizado exitosamente"
+
+    def eliminar_usuario(self, id_usuario):
+        with self.app.app_context():
+            usuario = self.Usuario.query.get(id_usuario)
+            if not usuario:
+                return False, "Usuario no encontrado"
+            self.db.session.delete(usuario)
+            self.db.session.commit()
+            return True, "Usuario eliminado exitosamente"

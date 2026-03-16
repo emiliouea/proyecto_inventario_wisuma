@@ -2,10 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import os
 from inventario.database import db # Import db from its own module
 
+import sys
+import os
+# Agregar carpeta Conexión al path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Conexión'))
+from conexion import configurar_app
+
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///inventario.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    configurar_app(app) # Usa la configuración de MySQL definida en conexion.py
     app.secret_key = 'tu_clave_secreta_aqui_2026'
 
     db.init_app(app)
@@ -14,17 +19,25 @@ def create_app():
 
 app = create_app()
 
-# Import models and inventario AFTER app and db are initialized
 from inventario.productos import Producto
 from inventario.clientes import Cliente # Temporary import for now
+from inventario.usuarios import Usuario
 from inventario.inventario import Inventario
+from sqlalchemy.exc import OperationalError
 
 with app.app_context():
-    db.drop_all()  # Elimina todas las tablas existentes
-    db.create_all() # Crea todas las tablas nuevamente
-    print("Database tables dropped and recreated.")
+    try:
+        # Intenta conectar a MySQL y crear tablas si no existen
+        db.create_all()
+        print("Tablas verificadas en la base de datos MySQL.")
+    except OperationalError as e:
+        print("====== ERROR DE CONEXIÓN ======")
+        print("No se pudo conectar a la base de datos MySQL.")
+        print("Por favor, asegúrese de que el servidor MySQL (XAMPP/WAMP o nativo) está en ejecución.")
+        print("Y que la base de datos 'proyecto_inventario_wisuma' está creada en MySQL.")
+        print(f"Detalle: {e}")
 
-inventario = Inventario(app, db, Producto, Cliente)
+inventario = Inventario(app, db, Producto, Cliente, Usuario=Usuario)
 
 # ==================== RUTAS PRINCIPALES ====================
 
@@ -334,6 +347,67 @@ def cargar_json():
 def about():
     """Página de información del sistema"""
     return render_template('about.html')
+
+# ==================== RUTAS DE USUARIOS ====================
+
+@app.route('/usuarios')
+def usuarios():
+    """Lista todos los usuarios del sistema"""
+    usuarios_list = inventario.obtener_todos_usuarios()
+    usuarios_dict = [u.to_dict() for u in usuarios_list]
+    return render_template('usuarios.html', usuarios=usuarios_dict)
+
+@app.route('/usuarios/nuevo', methods=['GET', 'POST'])
+def usuario_nuevo():
+    """Formulario para agregar un nuevo usuario"""
+    if request.method == 'POST':
+        usuario = Usuario(
+            nombre=request.form['nombre'],
+            mail=request.form['mail'],
+            password=request.form['password']
+        )
+        
+        exito, mensaje = inventario.agregar_usuario(usuario)
+        if exito:
+            flash(mensaje, 'success')
+            return redirect(url_for('usuarios'))
+        else:
+            flash(mensaje, 'error')
+            
+    return render_template('usuario_form.html', usuario=None, accion='Agregar')
+
+@app.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
+def usuario_editar(id_usuario):
+    """Editar un usuario existente"""
+    usuario = inventario.obtener_usuario_por_id(id_usuario)
+    if not usuario:
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('usuarios'))
+        
+    if request.method == 'POST':
+        exito, mensaje = inventario.actualizar_usuario(
+            id_usuario,
+            nombre=request.form['nombre'],
+            mail=request.form['mail'],
+            password=request.form['password']
+        )
+        if exito:
+            flash(mensaje, 'success')
+            return redirect(url_for('usuarios'))
+        else:
+            flash(mensaje, 'error')
+            
+    return render_template('usuario_form.html', usuario=usuario.to_dict(), accion='Editar')
+
+@app.route('/usuarios/eliminar/<int:id_usuario>', methods=['POST'])
+def usuario_eliminar(id_usuario):
+    """Elimina un usuario del sistema"""
+    exito, mensaje = inventario.eliminar_usuario(id_usuario)
+    if exito:
+        flash(mensaje, 'success')
+    else:
+        flash(mensaje, 'error')
+    return redirect(url_for('usuarios'))
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))

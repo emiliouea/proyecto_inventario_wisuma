@@ -76,6 +76,14 @@
             </li>
             <li class="nav-item">
               <a
+                class="nav-link {% if request.endpoint in ['usuarios', 'usuario_nuevo', 'usuario_editar'] %}active{% endif %}"
+                href="{{ url_for('usuarios') }}"
+              >
+                <i class="bi bi-person-badge"></i> Usuarios
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
                 class="nav-link {% if request.endpoint == 'about' %}active{% endif %}"
                 href="{{ url_for('about') }}"
               >
@@ -97,7 +105,7 @@
         </p>
         <p class="mb-0 small text-muted">
           <i class="bi bi-code-slash"></i> Desarrollado con Flask, Bootstrap 5 y
-          SQLite
+          MySQL
         </p>
       </div>
     </footer>
