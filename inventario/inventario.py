@@ -172,6 +172,12 @@ class Inventario:
                 return []
             return self.Usuario.query.all()
 
+    def buscar_usuario_por_email(self, email):
+        with self.app.app_context():
+            if not self.Usuario:
+                return None
+            return self.Usuario.query.filter_by(email=email).first()
+
     def obtener_usuario_por_id(self, id_usuario):
         with self.app.app_context():
             return self.Usuario.query.get(id_usuario)

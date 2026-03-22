@@ -3,9 +3,9 @@
 config_db = {
     'host': 'localhost',
     'usuario': 'root',
-    'password': '',  # Reemplazar con la contraseña de MySQL si es necesario
-    'database': 'proyecto_inventario_wisuma', # Reemplazar con el nombre de tu base de datos
-    'puerto': 3306
+    'password': '123456',   
+    'database': 'proyecto_inventario_wisuma',  
+    'puerto': 3307
 }
 
 def obtener_uri_conexion():

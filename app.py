@@ -1,12 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from inventario.database import db # Import db from its own module
 
 import sys
-import os
 # Agregar carpeta Conexión al path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Conexión'))
 from conexion import configurar_app
+
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.login_message = "Por favor inicie sesión para acceder a esta página."
+
+@login_manager.user_loader
+def load_user(user_id):
+    from inventario.usuarios import Usuario
+    return Usuario.query.get(int(user_id))
 
 def create_app():
     app = Flask(__name__)
@@ -14,6 +24,7 @@ def create_app():
     app.secret_key = 'tu_clave_secreta_aqui_2026'
 
     db.init_app(app)
+    login_manager.init_app(app)
 
     return app
 
@@ -39,13 +50,83 @@ with app.app_context():
 
 inventario = Inventario(app, db, Producto, Cliente, Usuario=Usuario)
 
+
+# ==================== RUTAS DE AUTENTICACION ====================
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if current_user.is_authenticated:
+        return redirect(url_for('inicio'))
+        
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        email = request.form['email']
+        password = request.form['password']
+        
+        # Verificar si existe el usuario
+        if inventario.buscar_usuario_por_email(email):
+            flash('El email ya está registrado.', 'error')
+            return redirect(url_for('registro'))
+            
+        # Hashear la contraseña (opcional pero recomendado)
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        
+        usuario = Usuario(nombre=nombre, email=email, password=hashed_password)
+        exito, mensaje = inventario.agregar_usuario(usuario)
+        
+        if exito:
+            flash('Registro exitoso. Ahora puede iniciar sesión.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash(f'Error al registrar: {mensaje}', 'error')
+            
+    return render_template('registro.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('inicio'))
+        
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        
+        usuario = inventario.buscar_usuario_por_email(email)
+        
+        # Verificamos si existe el usuario y si coincide la contraseña
+        # (usamos check_password_hash si las guardamos hasheadas o comparación directa si no)
+        if usuario:
+            # Compatibilidad: si la DB vieja no tiene hashes, permitimos loguear con pass directo
+            password_correct = False
+            if usuario.password.startswith('pbkdf2:sha256'):
+                password_correct = check_password_hash(usuario.password, password)
+            else:
+                password_correct = (usuario.password == password)
+                
+            if password_correct:
+                login_user(usuario)
+                flash('Sesión iniciada exitosamente.', 'success')
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('inicio'))
+                
+        flash('Email o contraseña incorrectos.', 'error')
+        
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Sesión cerrada.', 'info')
+    return redirect(url_for('login'))
+
+
 # ==================== RUTAS PRINCIPALES ====================
 
 @app.route('/')
+@login_required
 def inicio():
     """Página principal con estadísticas del inventario"""
-    # TODO: Implementar obtener_estadisticas, obtener_todos_clientes, obtener_todas_facturas con SQLAlchemy
-    # For now, return placeholder values
     total_productos = len(inventario.obtener_todos_productos())
     total_clientes = len(inventario.obtener_todos_clientes())
 
@@ -78,6 +159,7 @@ def inicio():
 # ==================== RUTAS DE PRODUCTOS (CRUD) ====================
 
 @app.route('/productos')
+@login_required
 def productos():
     """Lista todos los productos del inventario"""
     categoria = request.args.get('categoria', '')
@@ -102,12 +184,12 @@ def productos():
                          busqueda_actual=busqueda)
 
 @app.route('/productos/nuevo', methods=['GET', 'POST'])
+@login_required
 def producto_nuevo():
     """Formulario para agregar un nuevo producto"""
     if request.method == 'POST':
         # Crear objeto Producto con los datos del formulario
         producto = Producto(
-            # codigo=request.form['codigo'], # Removed 'codigo' as per new model
             nombre=request.form['nombre'],
             categoria=request.form['categoria'],
             precio=float(request.form['precio']),
@@ -123,7 +205,6 @@ def producto_nuevo():
         else:
             flash(mensaje, 'error')
     
-    # categorias = inventario.obtener_categorias()
     categorias = [] # Placeholder
     return render_template('producto_form.html', 
                          producto=None, 
@@ -131,6 +212,7 @@ def producto_nuevo():
                          accion='Agregar')
 
 @app.route('/productos/editar/<int:producto_id>', methods=['GET', 'POST'])
+@login_required
 def producto_editar(producto_id):
     """Formulario para editar un producto existente"""
     producto = inventario.obtener_producto_por_id(producto_id)
@@ -155,7 +237,6 @@ def producto_editar(producto_id):
         else:
             flash(mensaje, 'error')
     
-    # categorias = inventario.obtener_categorias()
     categorias = [] # Placeholder
     return render_template('producto_form.html', 
                          producto=producto.to_dict(),
@@ -163,6 +244,7 @@ def producto_editar(producto_id):
                          accion='Editar')
 
 @app.route('/productos/eliminar/<int:producto_id>', methods=['POST'])
+@login_required
 def producto_eliminar(producto_id):
     """Elimina un producto del inventario"""
     exito, mensaje = inventario.eliminar_producto(producto_id)
@@ -175,6 +257,7 @@ def producto_eliminar(producto_id):
     return redirect(url_for('productos'))
 
 @app.route('/item/<int:producto_id>')
+@login_required
 def item(producto_id):
     """Detalle de un producto específico"""
     producto = inventario.obtener_producto_por_id(producto_id)
@@ -190,6 +273,7 @@ def item(producto_id):
 # ==================== RUTAS DE CLIENTES (CRUD) ====================
 
 @app.route('/clientes')
+@login_required
 def clientes():
     """Lista todos los clientes"""
     clientes_list = inventario.obtener_todos_clientes()
@@ -197,6 +281,7 @@ def clientes():
     return render_template('clientes.html', clientes=clientes_dict)
 
 @app.route('/clientes/nuevo', methods=['GET', 'POST'])
+@login_required
 def cliente_nuevo():
     """Formulario para agregar un nuevo cliente"""
     if request.method == 'POST':
@@ -218,6 +303,7 @@ def cliente_nuevo():
     return render_template('cliente_form.html', cliente=None, accion='Agregar')
 
 @app.route('/clientes/editar/<int:cliente_id>', methods=['GET', 'POST'])
+@login_required
 def cliente_editar(cliente_id):
     """Formulario para editar un cliente existente"""
     cliente = inventario.obtener_cliente_por_id(cliente_id)
@@ -246,6 +332,7 @@ def cliente_editar(cliente_id):
                          accion='Editar')
 
 @app.route('/clientes/eliminar/<int:cliente_id>', methods=['POST'])
+@login_required
 def cliente_eliminar(cliente_id):
     """Elimina un cliente"""
     exito, mensaje = inventario.eliminar_cliente(cliente_id)
@@ -260,9 +347,9 @@ def cliente_eliminar(cliente_id):
 # ==================== RUTAS DE FACTURAS ====================
 
 @app.route('/facturas')
+@login_required
 def facturas():
     """Lista todas las facturas"""
-    # facturas_list = inventario.obtener_todas_facturas()
     facturas_list = [
         {"id": 1, "cliente_nombre": "Cliente A", "fecha": "2026-03-01", "valor_total": 150.75},
         {"id": 2, "cliente_nombre": "Cliente B", "fecha": "2026-03-05", "valor_total": 200.00}
@@ -276,6 +363,7 @@ def facturas():
     return render_template('facturas.html', facturas=facturas_dict)
 
 @app.route('/datos/txt')
+@login_required
 def datos_txt():
     productos_cargados, mensaje = inventario.cargar_productos_txt()
     if not productos_cargados:
@@ -283,12 +371,14 @@ def datos_txt():
     return render_template('datos.html', data=productos_cargados, tipo='TXT')
 
 @app.route('/datos/txt/guardar', methods=['POST'])
+@login_required
 def guardar_txt():
     exito, mensaje = inventario.guardar_productos_txt()
     flash(mensaje, 'success' if exito else 'error')
     return redirect(url_for('datos_txt'))
 
 @app.route('/datos/txt/cargar', methods=['POST'])
+@login_required
 def cargar_txt():
     productos_cargados, mensaje = inventario.cargar_productos_txt()
     for producto_dict in productos_cargados:
@@ -298,6 +388,7 @@ def cargar_txt():
     return redirect(url_for('datos_txt'))
 
 @app.route('/datos/json')
+@login_required
 def datos_json():
     productos_cargados, mensaje = inventario.cargar_productos_json()
     if not productos_cargados:
@@ -305,12 +396,14 @@ def datos_json():
     return render_template('datos.html', data=productos_cargados, tipo='JSON')
 
 @app.route('/datos/json/guardar', methods=['POST'])
+@login_required
 def guardar_json():
     exito, mensaje = inventario.guardar_productos_json()
     flash(mensaje, 'success' if exito else 'error')
     return redirect(url_for('datos_json'))
 
 @app.route('/datos/csv')
+@login_required
 def datos_csv():
     productos_cargados, mensaje = inventario.cargar_productos_csv()
     if not productos_cargados:
@@ -318,12 +411,14 @@ def datos_csv():
     return render_template('datos.html', data=productos_cargados, tipo='CSV')
 
 @app.route('/datos/csv/guardar', methods=['POST'])
+@login_required
 def guardar_csv():
     exito, mensaje = inventario.guardar_productos_csv()
     flash(mensaje, 'success' if exito else 'error')
     return redirect(url_for('datos_csv'))
 
 @app.route('/datos/csv/cargar', methods=['POST'])
+@login_required
 def cargar_csv():
     productos_cargados, mensaje = inventario.cargar_productos_csv()
     for producto_dict in productos_cargados:
@@ -333,6 +428,7 @@ def cargar_csv():
     return redirect(url_for('datos_csv'))
 
 @app.route('/datos/json/cargar', methods=['POST'])
+@login_required
 def cargar_json():
     productos_cargados, mensaje = inventario.cargar_productos_json()
     for producto_dict in productos_cargados:
@@ -351,6 +447,7 @@ def about():
 # ==================== RUTAS DE USUARIOS ====================
 
 @app.route('/usuarios')
+@login_required
 def usuarios():
     """Lista todos los usuarios del sistema"""
     usuarios_list = inventario.obtener_todos_usuarios()
@@ -358,13 +455,17 @@ def usuarios():
     return render_template('usuarios.html', usuarios=usuarios_dict)
 
 @app.route('/usuarios/nuevo', methods=['GET', 'POST'])
+@login_required
 def usuario_nuevo():
     """Formulario para agregar un nuevo usuario"""
     if request.method == 'POST':
+        password = request.form['password']
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        
         usuario = Usuario(
             nombre=request.form['nombre'],
-            mail=request.form['mail'],
-            password=request.form['password']
+            email=request.form['email'],
+            password=hashed_password
         )
         
         exito, mensaje = inventario.agregar_usuario(usuario)
@@ -377,6 +478,7 @@ def usuario_nuevo():
     return render_template('usuario_form.html', usuario=None, accion='Agregar')
 
 @app.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
+@login_required
 def usuario_editar(id_usuario):
     """Editar un usuario existente"""
     usuario = inventario.obtener_usuario_por_id(id_usuario)
@@ -385,11 +487,17 @@ def usuario_editar(id_usuario):
         return redirect(url_for('usuarios'))
         
     if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password:
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        else:
+            hashed_password = usuario.password
+            
         exito, mensaje = inventario.actualizar_usuario(
             id_usuario,
             nombre=request.form['nombre'],
-            mail=request.form['mail'],
-            password=request.form['password']
+            email=request.form['email'],
+            password=hashed_password
         )
         if exito:
             flash(mensaje, 'success')
@@ -400,6 +508,7 @@ def usuario_editar(id_usuario):
     return render_template('usuario_form.html', usuario=usuario.to_dict(), accion='Editar')
 
 @app.route('/usuarios/eliminar/<int:id_usuario>', methods=['POST'])
+@login_required
 def usuario_eliminar(id_usuario):
     """Elimina un usuario del sistema"""
     exito, mensaje = inventario.eliminar_usuario(id_usuario)
