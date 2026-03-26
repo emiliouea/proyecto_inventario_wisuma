@@ -13,7 +13,7 @@ endblock %} {% block content %}
 <!-- Cards de Navegación Rápida -->
 <div class="row g-4 mb-5">
   <div class="col-md-4">
-    <a href="{{ url_for('productos') }}" class="text-decoration-none">
+    <a href="{{ url_for('productos.index') }}" class="text-decoration-none">
       <div class="card h-100 shadow-sm hover-card">
         <div class="card-body text-center">
           <i class="bi bi-box-seam display-1 text-primary"></i>
@@ -27,7 +27,7 @@ endblock %} {% block content %}
   </div>
 
   <div class="col-md-4">
-    <a href="{{ url_for('clientes') }}" class="text-decoration-none">
+    <a href="{{ url_for('clientes.index') }}" class="text-decoration-none">
       <div class="card h-100 shadow-sm hover-card">
         <div class="card-body text-center">
           <i class="bi bi-people display-1 text-success"></i>
@@ -41,7 +41,7 @@ endblock %} {% block content %}
   </div>
 
   <div class="col-md-4">
-    <a href="{{ url_for('facturas') }}" class="text-decoration-none">
+    <a href="{{ url_for('facturas.index') }}" class="text-decoration-none">
       <div class="card h-100 shadow-sm hover-card">
         <div class="card-body text-center">
           <i class="bi bi-receipt display-1 text-info"></i>
@@ -136,7 +136,7 @@ endblock %} {% block content %}
         <div>
           <span class="badge bg-danger">{{ producto.stock }} unidades</span>
           <a
-            href="{{ url_for('producto_editar', producto_id=producto.id) }}"
+            href="{{ url_for('productos.editar', producto_id=producto.id) }}"
             class="btn btn-sm btn-outline-primary ms-2"
           >
             <i class="bi bi-pencil"></i> Actualizar
@@ -155,7 +155,7 @@ endblock %} {% block content %}
   {% for categoria in estadisticas.categorias %}
   <div class="col-md-4">
     <a
-      href="{{ url_for('productos', categoria=categoria) }}"
+      href="{{ url_for('productos.index', categoria=categoria) }}"
       class="text-decoration-none"
     >
       <div class="card shadow-sm hover-card">

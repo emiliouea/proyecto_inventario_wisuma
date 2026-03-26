@@ -1,0 +1,128 @@
+{% extends "base.html" %} {% block title %}Nueva Factura - Ferretería Senguana{%
+endblock %} {% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-receipt"></i> Nueva Factura</h2>
+  <a href="{{ url_for('facturas.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %} {% for
+category, message in messages %}
+<div
+  class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+>
+  {{ message }}<button
+    type="button"
+    class="btn-close"
+    data-bs-dismiss="alert"
+  ></button>
+</div>
+{% endfor %} {% endwith %}
+
+<form method="POST" action="{{ url_for('facturas.nueva') }}">
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <i class="bi bi-person"></i> Datos del Cliente
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label for="cliente_id" class="form-label"
+          >Cliente <span class="text-danger">*</span></label
+        >
+        <select name="cliente_id" id="cliente_id" class="form-select" required>
+          <option value="">-- Seleccione un cliente --</option>
+          {% for c in clientes %}
+          <option value="{{ c.id }}">{{ c.nombre }} ({{ c.tipo }})</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div
+      class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+    >
+      <span><i class="bi bi-box-seam"></i> Productos</span>
+      <button
+        type="button"
+        class="btn btn-sm btn-light"
+        onclick="agregarFila()"
+      >
+        <i class="bi bi-plus"></i> Agregar producto
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <table class="table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Producto</th>
+            <th style="width: 120px">Cantidad</th>
+            <th style="width: 50px"></th>
+          </tr>
+        </thead>
+        <tbody id="filas-productos">
+          <tr class="fila-producto">
+            <td>
+              <select name="producto_id[]" class="form-select" required>
+                <option value="">-- Seleccione --</option>
+                {% for p in productos %}
+                <option value="{{ p.id }}">
+                  {{ p.nombre }} - ${{ "%.2f"|format(p.precio) }} (stock: {{
+                  p.stock }})
+                </option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <input
+                type="number"
+                name="cantidad[]"
+                class="form-control"
+                min="1"
+                value="1"
+                required
+              />
+            </td>
+            <td>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                onclick="eliminarFila(this)"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2">
+    <a href="{{ url_for('facturas.index') }}" class="btn btn-outline-secondary"
+      >Cancelar</a
+    >
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-save"></i> Guardar Factura
+    </button>
+  </div>
+</form>
+
+<script>
+  function agregarFila() {
+    const tbody = document.getElementById("filas-productos");
+    const primera = tbody.querySelector(".fila-producto");
+    const nueva = primera.cloneNode(true);
+    nueva.querySelector("select").value = "";
+    nueva.querySelector("input").value = 1;
+    tbody.appendChild(nueva);
+  }
+  function eliminarFila(btn) {
+    if (document.querySelectorAll(".fila-producto").length > 1)
+      btn.closest("tr").remove();
+  }
+</script>
+{% endblock %}

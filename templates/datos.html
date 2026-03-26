@@ -1,52 +1,67 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Datos {{ tipo }} - Ferretería
+Senguana{% endblock %} {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Datos desde Archivo {{ tipo }}</h2>
+  <h2 class="mb-4">Datos desde Archivo {{ tipo }}</h2>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+  {% with messages = get_flashed_messages(with_categories=true) %} {% for
+  category, message in messages %}
+  <div class="alert alert-{{ category }} alert-dismissible fade show">
+    {{ message }}<button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+    ></button>
+  </div>
+  {% endfor %} {% endwith %}
 
-    <div class="mb-3">
-        <form action="{{ url_for('guardar_txt') }}" method="post" class="d-inline">
-            <button type="submit" class="btn btn-success">Guardar Productos a TXT</button>
-        </form>
-        <form action="{{ url_for('cargar_txt') }}" method="post" class="d-inline ms-2">
-            <button type="submit" class="btn btn-info">Cargar Productos desde TXT</button>
-        </form>
-    </div>
-
-    {% if data %}
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        {% for key in data[0].keys() %}
-                            <th scope="col">{{ key.capitalize() }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in data %}
-                        <tr>
-                            {% for value in item.values() %}
-                                <td>{{ value }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <p>No hay datos disponibles para mostrar.</p>
+  <div class="mb-3 d-flex gap-2">
+    {% if tipo == 'TXT' %}
+    <form action="{{ url_for('datos.guardar_txt') }}" method="post">
+      <button type="submit" class="btn btn-success">Guardar a TXT</button>
+    </form>
+    <form action="{{ url_for('datos.cargar_txt') }}" method="post">
+      <button type="submit" class="btn btn-info">Cargar desde TXT</button>
+    </form>
+    {% elif tipo == 'JSON' %}
+    <form action="{{ url_for('datos.guardar_json') }}" method="post">
+      <button type="submit" class="btn btn-success">Guardar a JSON</button>
+    </form>
+    <form action="{{ url_for('datos.cargar_json') }}" method="post">
+      <button type="submit" class="btn btn-info">Cargar desde JSON</button>
+    </form>
+    {% elif tipo == 'CSV' %}
+    <form action="{{ url_for('datos.guardar_csv') }}" method="post">
+      <button type="submit" class="btn btn-success">Guardar a CSV</button>
+    </form>
+    <form action="{{ url_for('datos.cargar_csv') }}" method="post">
+      <button type="submit" class="btn btn-info">Cargar desde CSV</button>
+    </form>
     {% endif %}
+  </div>
+
+  {% if data %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-dark">
+        <tr>
+          {% for key in data[0].keys() %}
+          <th>{{ key.capitalize() }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data %}
+        <tr>
+          {% for value in item.values() %}
+          <td>{{ value }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted">No hay datos disponibles para mostrar.</p>
+  {% endif %}
 </div>
 {% endblock %}

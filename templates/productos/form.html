@@ -2,40 +2,36 @@
 Senguana{% endblock %} {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h2><i class="bi bi-box-seam"></i> {{ accion }} Producto</h2>
-        <p class="text-muted">
-          Complete el formulario para {{ accion.lower() }} un producto al
-          inventario
-        </p>
-      </div>
-      <a href="{{ url_for('productos') }}" class="btn btn-outline-secondary">
+      <h2><i class="bi bi-box-seam"></i> {{ accion }} Producto</h2>
+      <a
+        href="{{ url_for('productos.index') }}"
+        class="btn btn-outline-secondary"
+      >
         <i class="bi bi-arrow-left"></i> Volver
       </a>
     </div>
 
-    <!-- Alertas -->
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %} {% for category, message in messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %} {% for
+    category, message in messages %}
     <div
       class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show"
-      role="alert"
     >
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      {{ message }}<button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+      ></button>
     </div>
-    {% endfor %} {% endif %} {% endwith %}
+    {% endfor %} {% endwith %}
 
-    <!-- Formulario con Bootstrap -->
     <div class="card shadow-sm">
       <div class="card-body">
         <form method="POST">
           <div class="mb-3">
-            <label for="nombre" class="form-label">
-              <i class="bi bi-box"></i> Nombre del Producto *
-            </label>
+            <label for="nombre" class="form-label"
+              ><i class="bi bi-box"></i> Nombre del Producto *</label
+            >
             <input
               type="text"
               class="form-control"
@@ -46,12 +42,10 @@ Senguana{% endblock %} {% block content %}
               placeholder="Ej: Martillo de Carpintero"
             />
           </div>
-
-          <!-- Categoría - Full Width -->
           <div class="mb-3">
-            <label for="categoria" class="form-label">
-              <i class="bi bi-tag"></i> Categoría *
-            </label>
+            <label for="categoria" class="form-label"
+              ><i class="bi bi-tag"></i> Categoría *</label
+            >
             <input
               type="text"
               class="form-control"
@@ -68,13 +62,11 @@ Senguana{% endblock %} {% block content %}
               {% endfor %}
             </datalist>
           </div>
-
-          <!-- Precio, Stock - Bootstrap Grid -->
           <div class="row g-3 mb-3">
             <div class="col-md-4">
-              <label for="precio" class="form-label">
-                <i class="bi bi-currency-dollar"></i> Precio ($) *
-              </label>
+              <label for="precio" class="form-label"
+                ><i class="bi bi-currency-dollar"></i> Precio ($) *</label
+              >
               <div class="input-group">
                 <span class="input-group-text">$</span>
                 <input
@@ -90,11 +82,10 @@ Senguana{% endblock %} {% block content %}
                 />
               </div>
             </div>
-
             <div class="col-md-4">
-              <label for="stock" class="form-label">
-                <i class="bi bi-boxes"></i> Stock (unidades) *
-              </label>
+              <label for="stock" class="form-label"
+                ><i class="bi bi-boxes"></i> Stock *</label
+              >
               <input
                 type="number"
                 class="form-control"
@@ -107,43 +98,30 @@ Senguana{% endblock %} {% block content %}
               />
             </div>
           </div>
-
-          <!-- Descripción - Textarea -->
           <div class="mb-4">
-            <label for="descripcion" class="form-label">
-              <i class="bi bi-card-text"></i> Descripción
-            </label>
+            <label for="descripcion" class="form-label"
+              ><i class="bi bi-card-text"></i> Descripción</label
+            >
             <textarea
               class="form-control"
               id="descripcion"
               name="descripcion"
-              rows="4"
+              rows="3"
               placeholder="Descripción detallada del producto..."
             >
 {{ producto.descripcion if producto else '' }}</textarea
             >
-            <div class="form-text">
-              Opcional: Agregue detalles adicionales sobre el producto
-            </div>
           </div>
-
-          <!-- Botones - Bootstrap Flex -->
           <div class="d-flex gap-2 justify-content-end">
-            <a href="{{ url_for('productos') }}" class="btn btn-secondary">
-              <i class="bi bi-x-circle"></i> Cancelar
-            </a>
+            <a href="{{ url_for('productos.index') }}" class="btn btn-secondary"
+              >Cancelar</a
+            >
             <button type="submit" class="btn btn-primary">
               <i class="bi bi-check-circle"></i> {{ accion }} Producto
             </button>
           </div>
         </form>
       </div>
-    </div>
-
-    <!-- Información adicional -->
-    <div class="alert alert-info mt-3" role="alert">
-      <i class="bi bi-info-circle"></i>
-      <strong>Nota:</strong> Los campos marcados con * son obligatorios.
     </div>
   </div>
 </div>
